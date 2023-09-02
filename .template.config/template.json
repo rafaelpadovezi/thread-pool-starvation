@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Rafael Miranda",
+  "classifications": [ "Web", "WebApi" ],
+  "identity": "Opiniated.WebApi",
+  "name": "Opiniated Web Api with EF Core",
+  "shortName": "opniatedwebapi",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "AspnetTemplate",
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "exclude": [ ".git/**", ".github/**" ]
+        }
+      ]
+    }
+  ]
+}

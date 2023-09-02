@@ -1,0 +1,63 @@
+﻿version: "3.9"
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server
+    environment:
+      SA_PASSWORD: Password1
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "Password1" -Q "SELECT 1" -b -o /dev/null
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  seed:
+    image: mcr.microsoft.com/dotnet/sdk:6.0
+    env_file: .env
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      - "./:/app/"
+    working_dir: /app
+    command: [
+      "dotnet", "run", "--project", "commands", "seed"
+    ]
+
+  app:
+    container_name: thread-pool-test-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    depends_on:
+      - seed
+    ports:
+      - "8080:8080"
+    volumes:
+      - "./:/app/"
+    entrypoint: [ "dotnet", "/app/src/bin/Debug/net6.0/AspnetTemplate.dll" ]
+    healthcheck:
+      test: curl http://localhost:8080/health
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    
+  send-load-sync:
+    # https://github.com/rakyll/hey
+    image: williamyeh/hey
+    volumes:
+      - .:/app
+    command: [ "-n", "1000", "-c", "100", "http://app:8080/v1/diagnostics/sync"  ]
+    depends_on:
+      app:
+        condition: service_healthy
+        
+  send-load-async:
+    extends:
+      service: send-load-sync
+    command: [ "-n", "1000", "-c", "100", "http://app:8080/v1/diagnostics/async"  ]

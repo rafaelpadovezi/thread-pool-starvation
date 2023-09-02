@@ -1,0 +1,5 @@
+**
+!src/
+!tests/
+!commands/
+!*.sln

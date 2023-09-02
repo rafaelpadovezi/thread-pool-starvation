@@ -1,0 +1,44 @@
+name: Run Template
+
+on:
+  create:
+
+jobs:
+  setup:
+    name: Initilize repository
+    runs-on: ubuntu-latest
+    if: github.event.repository.name != 'aspnet-template'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.4.2
+
+      - name: Install template
+        run: dotnet new --install ./
+
+      - name: Create project
+        run: dotnet new opniatedwebapi -o temp-dir --name ${{ github.event.repository.name }}
+
+      - name: Prepare root directory
+        shell: bash
+        # Remove all files and folder except .git/ and temp-dir/
+        run: |
+          find ./ -maxdepth 1 \
+          ! -name '.git' \
+          ! -name 'temp-dir' \
+          ! -name '.' \
+          ! -exec rm -rf {} +
+
+      - name: Move files to root
+        shell: bash
+        run: |
+          rsync -r ./temp-dir/ . && \
+          rm -rf ./temp-dir/
+
+      - name: Reinitialize git repository
+        shell: bash
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com" && \
+          git config --global user.name "github-actions[bot]" && \
+          git add . && \
+          git commit -m 'Initial commit' && \
+          git push
