@@ -2,4 +2,5 @@
 !src/
 !tests/
 !commands/
+!diag/
 !*.sln
