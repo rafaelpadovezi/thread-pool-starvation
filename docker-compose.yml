@@ -37,6 +37,7 @@ services:
       DOTNET_DiagnosticPorts: /app/diag/dotnet-monitor.sock
     depends_on:
       - seed
+      - monitor
     ports:
       - "8080:8080"
     volumes:
@@ -62,14 +63,13 @@ services:
     ports:
       - "52323:52323"
       - "52325:52325"
-    depends_on:
-      - app
+    
   send-load-sync:
     # https://github.com/rakyll/hey
     image: williamyeh/hey
     volumes:
       - .:/app
-    command: [ "-n", "10000", "-c", "100", "http://app:8080/v1/diagnostics/sync"  ]
+    command: [ "-n", "1000", "-c", "100", "http://app:8080/v1/diagnostics/sync"  ]
     depends_on:
       app:
         condition: service_healthy

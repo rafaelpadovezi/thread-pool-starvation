@@ -5,7 +5,7 @@ namespace AspnetTemplate.Infrastructure;
 
 public class AppDbContext : DbContext
 {
-    public DbSet<Sample> Samples { get; set; }
+    public DbSet<Sample> Samples => Set<Sample>();
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {

@@ -10,7 +10,6 @@ namespace AspnetTemplate.Controllers.v1;
 [Route("v{version:apiVersion}/[controller]")]
 public class DiagnosticsController : ControllerBase
 {
-    private const string SqlDelay = "WAITFOR DELAY '00:00:00.500'"; // 500 ms
     private readonly AppDbContext _context;
 
     public DiagnosticsController(AppDbContext context)
@@ -21,33 +20,14 @@ public class DiagnosticsController : ControllerBase
     [HttpGet("sync")]
     public IActionResult GetSync()
     {
-        var result = DoQuery();
-        return Ok(result);
-    }
-
-    [HttpGet("sync-over-async")]
-    public IActionResult GetAsyncOverSync()
-    {
-        var result = DoQueryAsync().Result;
-        return Ok(result);
+        _context.Database.ExecuteSqlRaw("WAITFOR DELAY '00:00:00.500'");
+        return Ok();
     }
 
     [HttpGet("async")]
     public async Task<IActionResult> GetAsync()
     {
-        var result = await DoQueryAsync();
-        return Ok(result);
-    }
-
-    int DoQuery()
-    {
-        _context.Database.ExecuteSqlRaw(SqlDelay);
-        return 1;
-    }
-
-    async ValueTask<int> DoQueryAsync()
-    {
-        await _context.Database.ExecuteSqlRawAsync(SqlDelay);
-        return 1;
+        await _context.Database.ExecuteSqlRawAsync("WAITFOR DELAY '00:00:00.500'");
+        return Ok();
     }
 }
