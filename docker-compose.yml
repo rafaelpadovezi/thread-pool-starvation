@@ -50,13 +50,13 @@ services:
       retries: 10
       start_period: 10s
   monitor:
-    image: mcr.microsoft.com/dotnet/monitor
+    image: mcr.microsoft.com/dotnet/monitor:7
     environment:
       DOTNETMONITOR_Storage__DefaultSharedPath: /diag
       DOTNETMONITOR_Metrics__Endpoints: http://+:52325
       DOTNETMONITOR_Urls: http://+:52323
       DOTNETMONITOR_DiagnosticPort__ConnectionMode: listen
-      DOTNETMONITOR_DiagnosticPort_EndpointName: /diag/dotnet-monitor.sock
+      DOTNETMONITOR_DiagnosticPort__EndpointName: /diag/dotnet-monitor.sock
     command: ["collect", "--no-auth"]
     volumes:
       - "./diag:/diag"
