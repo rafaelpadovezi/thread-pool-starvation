@@ -37,7 +37,6 @@ services:
       DOTNET_DiagnosticPorts: /app/diag/dotnet-monitor.sock
     depends_on:
       - seed
-      - monitor
     ports:
       - "8080:8080"
     volumes:
@@ -78,3 +77,14 @@ services:
     extends:
       service: send-load-sync
     command: [ "-n", "1000", "-c", "100", "http://app:8080/v1/diagnostics/async"  ]
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - "./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml"
+      - "prometheus-data:/prometheus"
+
+volumes:
+  prometheus-data:
