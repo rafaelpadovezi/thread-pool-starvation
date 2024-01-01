@@ -37,6 +37,7 @@ services:
       DOTNET_DiagnosticPorts: /app/diag/dotnet-monitor.sock
     depends_on:
       - seed
+      - monitor
     ports:
       - "8080:8080"
     volumes:
@@ -49,14 +50,14 @@ services:
       retries: 10
       start_period: 10s
   monitor:
-    image: mcr.microsoft.com/dotnet/monitor:7
+    image: mcr.microsoft.com/dotnet/monitor:6
     environment:
       DOTNETMONITOR_Storage__DefaultSharedPath: /diag
       DOTNETMONITOR_Metrics__Endpoints: http://+:52325
       DOTNETMONITOR_Urls: http://+:52323
       DOTNETMONITOR_DiagnosticPort__ConnectionMode: listen
       DOTNETMONITOR_DiagnosticPort__EndpointName: /diag/dotnet-monitor.sock
-    command: ["collect", "--no-auth"]
+    command: ["--no-auth"]
     volumes:
       - "./diag:/diag"
     ports:
@@ -68,15 +69,17 @@ services:
     image: williamyeh/hey
     volumes:
       - .:/app
-    command: [ "-n", "1000", "-c", "100", "http://app:8080/v1/diagnostics/sync"  ]
+    command: [ "-z", "2m", "-c", "100", "http://app:8080/v1/diagnostics/sync"  ]
     depends_on:
       app:
         condition: service_healthy
-        
+      grafana:
+        condition: service_healthy
+
   send-load-async:
     extends:
       service: send-load-sync
-    command: [ "-n", "1000", "-c", "100", "http://app:8080/v1/diagnostics/async"  ]
+    command: [ "-z", "2m", "-c", "100", "http://app:8080/v1/diagnostics/async"  ]
 
   prometheus:
     image: prom/prometheus
@@ -85,6 +88,29 @@ services:
     volumes:
       - "./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml"
       - "prometheus-data:/prometheus"
+    healthcheck:
+      test: ["CMD", "wget", "-c", "http://localhost:9090"]
+      interval: 10s
+      timeout: 15s
+      retries: 10
+      start_period: 40s
+  grafana:
+    image: grafana/grafana-oss
+    ports:
+      - "3000:3000"
+    volumes:
+      # https://grafana.com/docs/grafana/latest/administration/provisioning/
+      - "./grafana/provisioning/:/etc/grafana/provisioning/"
+      - "./grafana/dashboards/:/var/lib/grafana/dashboards/"
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "grafana-cli", "plugins", "ls"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
 volumes:
   prometheus-data:
